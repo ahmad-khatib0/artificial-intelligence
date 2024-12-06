@@ -1,0 +1,120 @@
+Weight Assignment: 
+  Weights are just variables, and a weight assignment is a particular choice of values for those variables. 
+  The program’s inputs are values that it processes in order to produce its results—for instance, taking 
+  image pixels as inputs, and returning the classification “dog” as a result. The program’s weight 
+  assignments are other values that define how the program will operate. Because they will affect 
+  the program, they are in a sense another kind of input. (By the way, what Arthur Samuel called 
+  “weights” are most generally referred to as model parameters these days),
+
+Learning would become entirely automatic when the adjustment of the weights was also 
+  automatic—when instead of us improving a model by adjusting its weights manually, 
+  we relied on an automated mechanism that produced adjustments based on performance
+
+For The image classification, Our inputs are the images. Our weights are the weights in 
+  the neural net. Our model is a neural net. Our results are the values that are calculated 
+  by the neural net, like “dog” or “cat.”
+
+Deep learning terminology: 
+  The functional form of the model is called its architecture (but be careful—sometimes people 
+    use model as a synonym of architecture, so this can get confusing).
+  The weights are called parameters.
+  The predictions are calculated from the independent variable, which is the data not including the labels.
+  The results of the model are called predictions.
+  The measure of performance is called the loss.
+  The loss depends not only on the predictions, but also on the correct labels (also known 
+    as targets or the dependent variable); e.g., “dog” or “cat.”
+
+Limitations Inherent to Machine Learning: 
+  A model cannot be created without data.
+  A model can learn to operate on only the patterns seen in the input data used to train it.
+  This learning approach creates only predictions, not recommended actions.
+  It’s not enough to just have examples of input data; we need labels for that data too 
+    (e.g., pictures of dogs and cats aren’t enough to train a model; we need a label for 
+    each one, saying which ones are dogs and which are cats).
+
+Generally speaking, we’ve seen that most organizations that say they don’t have enough data 
+  actually mean they don’t have enough labeled data.
+
+Computer vision datasets are normally structured in such a way that the label for an image is 
+  part of the filename or path—most commonly the parent folder name. fastai comes with a 
+  number of standardized labeling methods, and ways to write your own.
+
+Why 224 pixels for images? This is the standard size for historical reasons (old pretrained models 
+  require this size exactly), but you can pass pretty much anything. If you increase the size, you’ll 
+  often get a model with better results (since it will be able to focus on more details), but at the 
+  price of speed and memory consumption; the opposite is true if you decrease the size.
+
+A classification model is one that attempts to predict a class, or category. That is, it’s predicting 
+  from a number of discrete possibilities, such as “dog” or “cat.” A regression model is one that 
+  attempts to predict one or more numeric quantities, such as a temperature or a location. Sometimes 
+  people use the word regression to refer to a particular kind of model called a linear regression 
+  model; this is a bad practice, 
+
+-- ImageDataLoaders.from_name_func(path, get_image_files(path), valid_pct=0.2, seed=42, label_func=is_cat, item_tfms=Resize(224))
+  The most important parameter to mention here is valid_pct=0.2. This tells fastai to hold out 20% of 
+  the data and not use it for training the model at all. This 20% of the data is called the validation 
+  set; the remaining 80% is called the training set. The validation set is used to measure the accuracy
+  of the model. By default, the 20% that is held out is selected randomly. The parameter seed=42 sets 
+  the random seed to the same value every time we run this code, which means we get the same validation 
+  set every time we run it—this way, if we change our model and retrain it, we know that any differences
+  are due to the changes to the model, not due to having a different random validation set.
+
+- Fastai will always show you your model’s accuracy using only the validation set, never the training 
+  set. This is absolutely critical, because if you train a large enough model for a long enough time, 
+  it will eventually memorize the label of every item in your dataset! The result will not be a useful 
+  model, because what we care about is how well our model works on previously unseen images. That is 
+  always our goal when creating a model: for it to be useful on data that the model sees only in 
+  the future, after it has been trained.
+  Even when your model has not fully memorized all your data, earlier on in training it may have memorized 
+  certain parts of it. As a result, the longer you train for, the better your accuracy will get on the 
+  training set; the validation set accuracy will also improve for a while, but eventually it will start 
+  getting worse as the model starts to memorize the training set rather than finding generalizable underlying 
+  patterns in the data. When this happens, we say that the model is overfitting.
+
+- Overfitting is the single most important and challenging issue when training for all machine learning
+  practitioners, and all algorithms. As you will see, it is easy to create a model that does a great 
+  job at making predictions on the exact data it has been trained on, but it is much harder to make 
+  accurate predictions on data the model has never seen before. And of course, this is the data that 
+  will matter in practice. For instance, if you create a handwritten digit classifier, and use it to 
+  recognize numbers written on checks, then you are never going to see any of the numbers that the 
+  model was trained on—every check will have slightly different variations of writing to deal with.
+
+- The 34 in resnet34 refers to the number of layers in this variant of the architecture (other options 
+  are 18, 50, 101, and 152). Models using architectures with more layers take longer to train and 
+  are more prone to overfitting (i.e., you can’t train them for as many epochs before the accuracy 
+  on the validation set starts getting worse). On the other hand, when using more data, they can 
+  be quite a bit more accurate.
+- What is a metric? A metric is a function that measures the quality of the model’s predictions using 
+  the validation set, and will be printed at the end of each epoch. In this case, we’re using 
+  error_rate, which is a function provided by fastai that does just what it says: tells you what 
+  percentage of images in the validation set are being classified incorrectly. Another common metric 
+  for classification is accuracy (which is just 1.0 - error_rate). fastai provides many more,
+
+- When using a pretrained model, cnn_learner will remove the last layer, since that is always 
+  specifically customized to the original training task (i.e., ImageNet dataset classification), 
+  and replace it with one or more new layers with randomized weights, of an appropriate size for 
+  the dataset you are working with. This last part of the model is known as the head.
+
+- Using a pretrained model for a task different from what it was originally trained for is known 
+  as transfer learning. Unfortunately, because transfer learning is so under-studied, few domains 
+  have pretrained models available. For instance, few pretrained models are currently available 
+  in medicine, making transfer learning challenging to use in that domain. In addition, it is not 
+  yet well understood how to use transfer learning for tasks such as time series analysis.
+
+- learn.fine_tune(1)
+ —determining how to fit the parameters of a model to get it to solve your problem. To fit a model, 
+  we have to provide at least one piece of information: how many times to look at each image 
+  (known as number of epochs). The number of epochs you select will largely depend on how much time 
+  you have available, and how long you find it takes in practice to fit your model. If you select 
+  a number that is too small, you can always train for more epochs later
+
+- we define a metric. During the training process, when the model has seen every
+  item in the training set, we call that an epoch.
+  
+-  Creating a model that can recognize the content of every individual pixel in 
+   an image is called segmentation
+
+- Data that is in the form of a table, such as from a spreadsheet, database, or a comma-separated 
+  values (CSV) file. A tabular model is a model that tries to predict one column of a table based 
+  on information in other columns of the table.
+
