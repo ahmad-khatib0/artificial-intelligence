@@ -1,0 +1,85 @@
+- Recognize when unexpected image types arise in the data when the model is being used in 
+  production this is known as checking for out-of-domain data.
+
+- Data Augmentation
+  One major challenge for object detection systems is that image labeling can be slow and expensive. 
+  There is a lot of work at the moment going into tools to try to make this labeling faster and easier, 
+  and to require fewer handcrafted labels to train accurate object detection models. One approach that is
+  particularly helpful is to synthetically generate variations of input images, such as by rotating them
+  or changing their brightness and contrast; this is called data augmentation and also works well for 
+  text and other types of models.
+
+- To turn our downloaded data into a DataLoaders object, we need to tell fastai at least four things:
+  What kinds of data we are working with
+  How to get the list of items
+  How to label these items
+  How to create the validation set
+
+- The independent variable is often referred to as x, and the dependent variable is often referred to as y
+
+- item_tfms=Resize(128)
+  Our images are all different sizes, and this is a problem for deep learning: we don’t feed the model 
+  one image at a time but several of them (what we call a mini-batch). To group them in a big array 
+  (usually called a tensor) that is going to go through our model, they all need to be of the same size.
+  So, we need to add a transform that will resize these images to the same size.
+
+- dls.valid.show_batch(max_n=4, nrows=1)
+  When you loop through a DataLoader, fastai will give you 64 (by default) items at a time, 
+  all stacked up into a single tensor. We can take a look at a few of those items by calling 
+  the show_batch method on a DataLoader
+
+- bears.new(item_tfms=Resize(128, ResizeMethod.Squish))
+  By default, Resize crops the images to fit a square shape of the size requested, using the full 
+  width or height. This can result in losing some important details. Alternatively, you can ask 
+  fastai to pad the images with zeros (black), or squish/stretch them
+
+- bears.new(item_tfms=RandomResizedCrop(128, min_scale=0.3))
+  We don't squish or Pad images, Instead, what we normally do in practice is to randomly select part 
+  of the image and then crop to just that part. On each epoch (which is one complete pass through all 
+  of our images in the dataset), we randomly select a different part of each image. This means that our 
+  model can learn to focus on, and recognize, different features in our images. It also reflects how 
+  images work in the real world: different photos of the same thing may be framed in slightly different ways
+
+- RandomResizedCrop is a specific example of a more general technique, called data augmentation. Data 
+  augmentation refers to creating random variations of our input data, such that they appear different 
+  but do not change the meaning of the data. Examples of common data augmentation techniques for images 
+  are rotation, flipping, perspective warping, brightness changes, and contrast changes
+
+- cleaner = ImageClassifierCleaner(learn)
+  fastai includes a handy GUI for data cleaning called ImageClassifierCleaner that allows you to choose 
+  a category and the training versus validation set and view the highest-loss images (in order), along 
+  with menus to allow images to be selected for removal or relabeling
+
+- learn.export()
+  a model consists of two parts: the architecture and the trained parameters. The easiest way to 
+  save a model is to save both of these, because that way, when you load the model, you can be sure 
+  that you have the matching architecture and parameters. To save both parts, use the export method.
+  This method even saves the definition of how to create your DataLoaders. This is important, because 
+  otherwise you would have to redefine how to transform your data in order to use your model in 
+  production. fastai automatically uses your validation set DataLoader for inference by default, so 
+  your data augmentation will not be applied, which is generally what you want.
+
+- learn_inf.predict('images/grizzly.jpg') # => ('grizzly', tensor(1), tensor([9.0767e-06, 9.9999e-01, 1.5748e-07])) 
+  This has returned three things: the predicted category in the same format you originally provided 
+  (in this case, that’s a string), the index of the predicted category, and the probabilities of each 
+  category. The last two are based on the order of categories in the vocab of the DataLoaders; that 
+  is, the stored list of all possible categories. 
+
+- let’s say we really were rolling out a bear detection system that will be attached to video cameras 
+  around campsites in national parks and will warn campers of incoming bears. If we used a model trained 
+  with the dataset we downloaded, there would be all kinds of problems in practice, such as these:
+  - Working with video data instead of images
+  - Handling nighttime images, which may not appear in this dataset
+  - Dealing with low-resolution camera images
+  - Ensuring results are returned fast enough to be useful in practice
+  - Recognizing bears in positions that are rarely seen in photos that people post online 
+    (for example from behind, partially covered by bushes, or a long way away from the camera)
+
+- One very common problem is domain shift, whereby the type of data that our model sees changes over
+  time. For instance, an insurance company may use a deep learning model as part of its pricing and risk 
+  algorithm, but over time the types of customers the company attracts and the types of risks it 
+  represents may change so much that the original training data is no longer relevant.
+
+
+
+
