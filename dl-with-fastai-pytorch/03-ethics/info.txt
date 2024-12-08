@@ -1,0 +1,54 @@
+
+- A database of suspected gang members maintained by California law enforcement officials was found
+  to be full of errors, including 42 babies who had been added to the database when they were less than 
+  1 year old (28 of whom were marked as “admitting to being gang members”). In this case, there was 
+  no process in place for correcting mistakes or removing people after they’d been added. Another 
+  example is the US credit report system: a large-scale study of credit reports by the Federal Trade 
+  Commission (FTC) in 2012 found that 26% of consumers had at least one mistake in their files,
+  and 5% had errors that could be devastating.
+
+
+- For example On YouTube, many videos have a description which indicates what camera was used to shoot
+  the video. As a result, some of these videos might get classified as videos about “photography.” If a 
+  channel has such a misclassified video, it might be classified as a “photography” channel, making it 
+  even more likely for future videos on this channel to be wrongly classified as “photography.”
+
+- The vast majority of the images are from the US and other Western countries, leading to models trained 
+  on ImageNet performing worse on scenes from other countries and cultures. For instance, research found 
+  that such models are worse at identifying household items (such as soap, spices, sofas, or beds) 
+  from lower-income countries
+
+- Algorithms (particularly machine learning algorithms!) and people are different. Consider these 
+  points about machine learning algorithms:
+  - Machine learning can create feedback loops: Small amounts of bias can rapidly increase
+    exponentially because of feedback loops.
+  - Machine learning can amplify bias: Human bias can lead to larger amounts of machine learning bias
+  - Algorithms and humans are used differently: Human decision makers and algorithmic decision makers 
+    are not used in a plug-and-play interchangeable way in practice. These examples are
+    given in the list on the next page.
+  - Technology is power: And with that comes responsibility.
+
+- A few steps toward addressing ethical issues:
+  Analyze a project you are working on.
+  Implement processes at your company to find and address ethical risks.
+  Support good policy.
+  Increase diversity.
+
+-- Analyze a Project You Are Working On: 
+  - Should we even be doing this?
+  - What bias is in the data?
+  - Can the code and data be audited?
+  - What are the error rates for different subgroups?
+  - What is the accuracy of a simple rule-based alternative?
+  - What processes are in place to handle appeals or mistakes?
+  - How diverse is the team that built it?
+
+-- ETHICAL LENSES:
+  - The rights approach: Which option best respects the rights of all who have a stake?
+  - The justice approach: Which option treats people equally or proportionately?
+  - The utilitarian approach: Which option will produce the most good and do the least harm?
+  - The common good approach: Which option best serves the community as a whole, not just some members?
+  - The virtue approach: Which option leads me to act as the sort of person I want to be?
+
+
+
