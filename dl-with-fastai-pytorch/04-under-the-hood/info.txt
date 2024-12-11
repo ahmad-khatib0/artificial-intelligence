@@ -1,0 +1,237 @@
+- Stochastic gradient descent (SGD), the mechanism for learning by updating weights automatically.
+
+- The MNIST database (Modified National Institute of Standards and Technology database) is a large 
+  database of handwritten digits that is commonly used for training various image processing systems
+
+- In a computer, everything is represented as a number. To view the numbers that make up this image, 
+  we have to convert it to a NumPy array or a PyTorch tensor. For instance, here’s what a section of 
+  the image looks like converted to a NumPy array:  array(im3)[4:10,4:10]
+
+- The 4:10 indicates we requested the rows from index 4 (inclusive) to 10 (noninclusive), and the same 
+  for the columns. NumPy indexes from top to bottom and from left to right, so this section is located 
+  near the top-left corner of the image. Here’s the same thing as a PyTorch tensor: tensor(im3)[4:10,4:10]
+  
+- torch.stack(seven_tensors).float()/255
+  we first combine all the images in this list into a single three-dimensional tensor. The most 
+  common way to describe such a tensor is to call it a rank-3 tensor. We often need to stack up 
+  individual tensors in a collection into a single tensor
+
+- len(stacked_threes.shape)  =>   3 
+  The length of a tensor’s shape is its rank, 
+  It is really important for you to commit to memory and practice these bits of tensor jargon: rank 
+  is the number of axes or dimensions in a tensor; shape is the size of each axis of a tensor.
+
+- mean3 = stacked_threes.mean(0)
+  Finally, we can compute what the ideal 3 looks like. We calculate the mean of all the image tensors by
+  taking the mean along dimension 0 of our stacked, rank-3 tensor. This is the dimension that indexes 
+  over all the images. In other words, for every pixel position, this will compute the average of that 
+  pixel over all images. The result will be one value for every pixel position, or a single image
+
+- show_image(a_3) 
+  How can we determine its distance from our ideal 3? We can’t just add up the differences between 
+  the pixels of this image and the ideal digit. Some differences will be positive, while others will 
+  be negative, and these differences will cancel out, resulting in a situation where an image that is 
+  too dark in some places and too light in others might be shown as having zero total differences 
+  from the ideal. That would be misleading!, To avoid this, data scientists use two main ways to 
+  measure distance in this context:
+  - Take the mean of the absolute value of differences (absolute value is the function that replaces 
+    negative values with positive values). This is called the mean absolute difference or L1 norm.
+  - Take the mean of the square of differences (which makes everything positive) and then take the 
+    square root (which undoes the squaring). This is called the root mean squared error (RMSE) or L2 norm.
+
+- F.l1_loss(a_3.float(),mean7), F.mse_loss(a_3,mean7).sqrt()
+  PyTorch already provides both of these as loss functions. You’ll find these inside torch.nn.functional, 
+  which the PyTorch team recommends importing as F (and is available by default under that name in fastai)
+  
+- Python is slow compared to many languages. Anything fast in Python, NumPy, or PyTorch is likely to be 
+  a wrapper for a compiled object written (and optimized) in another language—specifically, C. In fact, 
+  NumPy arrays and PyTorch tensors can finish computations many thousands of times faster than using 
+  pure Python.
+
+- A NumPy array is a multidimensional table of data, with all items of the same type. Since that can 
+  be any type at all, they can even be arrays of arrays, with the innermost arrays potentially being 
+  different sizes—this is called a jagged array. By “multidimensional table,” we mean, for instance, 
+  a list (dimension of one), a table or matrix (dimension of two), a table of tables or cube (dimension 
+  of three), and so forth. If the items are all of simple type such as integer or float, NumPy will store 
+  them as a compact C data structure in memory. This is where NumPy shines. NumPy has a wide variety of 
+  operators and methods that can run computations on these compact structures at the same speed as 
+  optimized C, because they are written in optimized C.
+
+- A PyTorch tensor is nearly the same thing as a NumPy array, but with an additional restriction that 
+  unlocks additional capabilities. It’s the same in that it, too, is a multidimensional table of data, 
+  with all items of the same type. However, the restriction is that a tensor cannot use just any old 
+  type—it has to use a single basic numeric type for all components. As a result, a tensor is not as 
+  flexible as a genuine array of arrays. For example, a PyTorch tensor cannot be jagged. It is always 
+  a regularly shaped multidimensional rectangular structure.
+
+- The vast majority of methods and operators supported by NumPy on these structures are also supported 
+  by PyTorch, but PyTorch tensors have additional capabilities. One major capability is that these 
+  structures can live on the GPU, in which case their computation will be optimized for the GPU and 
+  can run much faster (given lots of values to work on). In addition, PyTorch can automatically calculate
+  derivatives of these operations, including combinations of operations. As you’ll see, it would be 
+  impossible to do deep learning in practice without this capability.
+
+- A metric is a number that is calculated based on the predictions of our model and the 
+  correct labels in our dataset  in order to tell us how good our model is.
+
+- def mnist_distance(a,b): return (a-b).abs().mean((-1,-2))
+  We ultimately want to write a function, is_3, that will decide whether an arbitrary image is 
+  a 3 or a 7. It will do this by deciding which of our two “ideal digits” that arbitrary image is 
+  closer to. For that we need to define a notion of distance—that is, a function that calculates 
+  the distance between two images.
+
+- valid_3_dist = mnist_distance(valid_3_tens, mean3)
+  # (tensor([0.1050, 0.1526, 0.1186, ..., 0.1122, 0.1170, 0.1086]), torch.Size([1010]))
+  Instead of complaining about shapes not matching, it returned the distance for every single 
+  image as a vector (i.e., a rank-1 tensor) of length 1,010 
+  (the number of 3s in our validation set). How did that happen?
+  Take another look at our function mnist_distance, and you’ll see we have there the subtraction 
+  (a-b). The magic trick is that PyTorch, when it tries to perform a simple subtraction operation 
+  between two tensors of different ranks, will use broadcasting: it will automatically expand the 
+  tensor with the smaller rank to have the same size as the one with the larger rank. 
+- Broadcasting is an important capability that makes tensor code much easier to write. After 
+  broadcasting so the two argument tensors have the same rank, PyTorch applies its usual logic 
+  for two tensors of the same rank: it performs the operation on each corresponding element of 
+  the two tensors, and returns the tensor result.
+  So in this case, PyTorch treats mean3, a rank-2 tensor representing a single image, as if it were
+  1,010 copies of the same image, and then subtracts each of those copies from each 3 in our 
+  validation set. 
+
+- There are a couple of important points about how broadcasting is implemented: 
+  - PyTorch doesn’t actually copy mean3 1,010 times. It pretends it were a tensor of that shape, 
+    but doesn’t allocate any additional memory.
+  - It does the whole calculation in C (or, if you’re using a GPU, in CUDA, 
+    the equivalent of C on the GPU), tens of thousands of times faster than 
+    pure Python (up to millions of times faster on a GPU!).
+  - This is true of all broadcasting and elementwise operations and functions done in PyTorch. 
+    It’s the most important technique for you to know to create efficient PyTorch code.
+
+- def mnist_distance(a,b): return (a-b).abs().mean((-1,-2))
+  our function calls mean((-1,-2)). The tuple (-1,-2) represents a range of axes. In Python, -1 
+  refers to the last element, and -2 refers to the second-to-last. So in this case, this tells PyTorch
+  that we want to take the mean ranging over the values indexed by the last two axes of the tensor. 
+  The last two axes are the horizontal and vertical dimensions of an image. After taking the mean over 
+  the last two axes, we are left with just the first tensor axis, which indexes over our images, which 
+  is why our final size was (1010). In other words, for every image, we averaged the intensity 
+  of all the pixels in that image.
+
+
+
++++++ Stochastic Gradient Descent +++++++
+
+- Instead of trying to find the similarity between an image and an “ideal image,” we could instead 
+  look at each individual pixel and come up with a set of weights for each, such that the highest 
+  weights are associated with those pixels most likely to be black for a particular category. For 
+  instance, pixels toward the bottom right are not very likely to be activated for a 7, so they should
+  have a low weight for a 7, but they are likely to be activated for an 8, so they should have a high 
+  weight for an 8. This can be represented as a function and set of weight values for each possible 
+  category—for instance, the probability of being the number 8:
+  --- def pr_eight(x,w) = (x*w).sum()
+  Here we are assuming that X is the image, represented as a vector—in other words, with all of the 
+  rows stacked up end to end into a single long line. And we are assuming that the weights are a 
+  vector W. If we have this function, we just need some way to update the weights to make them a 
+  little bit better.
+
+- here are the steps required to turn this function into a machine learning classifier:
+  1. Initialize the weights.
+  2. For each image, use these weights to predict whether it appears to be a 3 or a 7.
+  3. Based on these predictions, calculate how good the model is (its loss).
+  4. Calculate the gradient, which measures for each weight how changing that 
+     weight would change the loss.
+  5. Step (that is, change) all the weights based on that calculation.
+  6. Go back to step 2 and repeat the process.
+  7. Iterate until you decide to stop the training process (for instance, because the model is 
+     good enough or you don’t want to wait any longer).
+
+- The general approach to each one follows some basic principles(The gradient descent process):
+  
+Initialize
+  We initialize the parameters to random values. This may sound surprising. There are certainly 
+  other choices we could make, such as initializing them to the percentage of times that pixel is 
+  activated for that category—but since we already know that we have a routine to improve these 
+  weights, it turns out that just starting with random weights works perfectly well.
+Loss
+  This is what Samuel referred to when he spoke of testing the effectiveness of any current weight 
+  assignment in terms of actual performance. We need a function that will return a number that is 
+  small if the performance of the model is good (the standard approach is to treat a small loss as 
+  good and a large loss as bad, although this is just a convention).
+Step
+  A simple way to figure out whether a weight should be increased a bit or decreased a bit would be 
+  just to try it: increase the weight by a small amount, and see if the loss goes up or down. Once 
+  you find the correct direction, you could then change that amount by a bit more, or a bit less, 
+  until you find an amount that works well. However, this is slow! As we will see, the magic of 
+  calculus allows us to directly figure out in which direction, and by roughly how much, to change 
+  each weight, without having to try all these small changes. The way to do this is by calculating 
+  gradients. This is just a performance optimization; we would get exactly the same results
+  by using the slower manual process as well.
+Stop
+  Once we’ve decided how many epochs to train the model for (a few suggestions for this were given
+  in the earlier list), we apply that decision. For our digit classifier, we would keep training 
+  until the accuracy of the model started getting worse, or we ran out of time.
+  
+- A gradient is defined as rise/run; that is, the change in the value of the function, 
+  divided by the change in the value of the parameter.
+  
+- You can calculate the derivative with respect to one weight and treat all the other ones as 
+  constant, and then repeat that for each other weight. This is how all of the gradients are 
+  calculated, for every weight.
+
+- xt = tensor(3.).requires_grad_()
+  Notice the special method requires_grad_? That’s the magical incantation we use to tell PyTorch 
+  that we want to calculate gradients with respect to that variable at that value. It is essentially 
+  tagging the variable, so PyTorch will remember to keep track of how to compute gradients of the 
+  other direct calculations on it that you will ask for.
+
+- yt.backward() 
+  The “backward” here refers to backpropagation, which is the name given to
+  the process of calculating the derivative of each layer
+
+
+- torch.cat([stacked_threes, stacked_sevens]).view(-1, 28*28)
+  We’ll concatenate them all into a single tensor, and also change them from a list of matrices (a rank-3 tensor)
+  to a list of vectors (a rank-2 tensor). We can do this using view, which is a PyTorch method that changes the 
+  shape of a tensor without changing its contents. -1 is a special parameter to view that means “make this 
+  axis as big as necessary to fit all the data”
+
+- bias = init_params(1)
+  The function weights*pixels won’t be flexible enough—it is always equal to 0 when the pixels are equal 
+  to 0 (i.e., its intercept is 0). You might remember from high school math that the formula for a line 
+  is y=w*x+b; we still need the b. We’ll initialize it to a random number too:
+
+- In neural networks, the w in the equation y=w*x+b is called the weights, and 
+  the b is called the bias. Together, the weights and bias make up the parameters.
+
+- Let’s check our accuracy. To decide if an output represents a 3 or a 7, we can just check whether it’s 
+  greater than 0, so our accuracy for each item can be calculated (using broadcasting, so no loops!) as follows:
+  corrects = (preds>0.0).float() == train_y
+
+- ds = L(enumerate(string.ascii_lowercase))
+  For training a model, we don’t just want any Python collection, but a collection containing independent and 
+  dependent variables (the inputs and targets of the model). A collection that contains tuples of independent 
+  and dependent variables is known in PyTorch as a Dataset. Here’s an example of an extremely simple Dataset:
+
+- dl = DataLoader(ds, batch_size=6, shuffle=True)
+  When we pass a Dataset to a DataLoader we will get back many batches that are themselves tuples of 
+  tensors representing batches of independent and dependent variables:
+
+- IN-PLACE OPERATIONS: Methods in PyTorch whose names end in an underscore modify their objects in place. 
+  For instance, bias.zero_ sets all elements of the tensor bias to 0.
+
+
+- A linear classifier is constrained in terms of what it can do. To make it a bit more complex 
+  (and able to handle more tasks), we need to add something nonlinear (i.e., different from ax+b)
+  between two linear classifiers — this is what gives us a neural network.
+
+- That little function res.max(tensor(0.0)) is called a rectified linear unit, also known as ReLU. 
+  We think we can all agree that rectified linear unit sounds pretty fancy and complicated…But 
+  actually, there’s nothing more to it than res.max(tensor(0.0))—in other words, replace every 
+  negative number with a zero. This tiny function is also available in PyTorch as F.relu
+
+
+# Jargon
+  - Activations: Numbers that are calculated (both by linear and nonlinear layers) 
+  - Parameters: Numbers that are randomly initialized, and optimized 
+    (that is, the numbers that define the model)
+
+
+
