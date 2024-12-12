@@ -1,0 +1,41 @@
+
+- Multi-label classification refers to the problem of identifying the categories of objects in 
+  images that may not contain exactly one type of object. There may be more than one kind of 
+  object, or there may be no objects at all in the classes you are looking for.
+
+- Dataset: A collection that returns a tuple of your independent and dependent variable for a single item
+- DataLoader: An iterator that provides a stream of mini-batches, where each mini-batch is a
+  couple of a batch of independent variables and a batch of dependent variables
+## On top of these, fastai provides two classes for bringing your training and validation sets together:
+- Datasets: An iterator that contains a training Dataset and a validation Dataset
+- DataLoaders: An object that contains a training DataLoader and a validation DataLoader
+
+$$ dsets.train[0]
+   As you can see, this simply returns a row of the DataFrame, twice. This is because by default, 
+   the data block assumes we have two things: input and target. We are going to need to grab the 
+   appropriate fields from the DataFrame,
+
+- Lambda functions are great for quickly iterating, but they are not compatible with serialization,
+  so we advise you to use the more verbose approach if you want to export your Learner after 
+  training (lambdas are fine if you are just experimenting).
+
+- The equivalent for single-label datasets (like MNIST or the Pet dataset), where the target is 
+  encoded as a single integer, is F.nll_loss or nn.NLLLoss for the version without the initial 
+  softmax, and F.cross_entropy or nn.CrossEntropyLoss for the version with the initial softmax.
+
+- learn.metrics = partial(accuracy_multi, thresh=0.1)
+  Picking a threshold is important. If you pick a threshold that’s too low, you’ll often be
+  failing to select correctly labeled objects. We can see this by changing our metric and
+  then calling validate, which returns the validation loss and metrics:
+
+- accuracy_multi(preds, targs, thresh=0.9, sigmoid=False)
+  We can call the metric directly. Note that by default get_preds applies the output activation 
+  function (sigmoid, in this case) for us, so we’ll need to tell accuracy_multi to not apply it:
+
+
+- Remember that you most probably want the following:
+• nn.CrossEntropyLoss for single-label classification
+• nn.BCEWithLogitsLoss for multi-label classification
+• nn.MSELoss for regression
+
+
