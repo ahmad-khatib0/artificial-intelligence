@@ -29,16 +29,17 @@ df.style.set_properties(**{'font-size': '6pt'}).background_gradient("Greys")
 seven_tensors = [tensor(Image.open(o)) for o in sevens]
 three_tensors = [tensor(Image.open(o)) for o in threes]
 len(three_tensors), len(seven_tensors)
+# (6131, 6265)
 
 show_image(three_tensors[1])
 
 stacked_sevens = torch.stack(seven_tensors).float() / 255
 stacked_threes = torch.stack(three_tensors).float()/255
-# E.g torch.Size([6131, 28, 28]) images len, height px, width px
 stacked_threes.shape
+# E.g torch.Size([6131, 28, 28]) images len, height px, width px
 
-len(stacked_threes.shape)
-stacked_threes.ndim  # get a tensor’s rank directly
+len(stacked_threes.shape)  # 3
+stacked_threes.ndim  # get a tensor’s rank directly => 3
 
 mean3 = stacked_threes.mean(0)
 mean7 = stacked_sevens.mean(0)

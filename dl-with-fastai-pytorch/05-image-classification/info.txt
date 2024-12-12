@@ -1,0 +1,90 @@
+
+$$ item_tfms=Resize(460),
+   batch_tfms=aug_transforms(size=224, min_scale=0.75),
+- 1. Crop full width or height: This is in item_tfms, so it’s applied to each individual image before 
+  it is copied to the GPU. It’s used to ensure all images are the same size. On the training set, the 
+  crop area is chosen randomly. On the validation set, the center square of the image is always chosen.
+- 2. Random crop and augment: This is in batch_tfms, so it’s applied to a batch all at once on the GPU, 
+  which means it’s fast. On the validation set, only the resize to the final size needed for the model 
+  is done here. On the training set, the random crop and any other augmentations are done first.
+
+-- To implement this process (resizing) in fastai, you use Resize as an item transform with a LARGE size,
+   and RandomResizedCrop as a batch transform with a SMALLER size. RandomResizedCrop will be added for 
+   you if you include the min_scale parameter in your aug_transforms function,  
+
+- Cross-Entropy Loss
+  Cross-entropy loss is a loss function that is similar to the one we used in the previous chapter, 
+  but (as we’ll see) has two benefits:
+• It works even when our dependent variable has more than two categories.
+• It results in faster and more reliable training.
+
+
+- x,y = dls.one_batch()            then print y: 
+  TensorCategory([
+    11, 0, 0, 5, 20, 4, 22, 31, 23, 10, 20, 2, 3, 27, 18, 23, 
+  > 33, 5, 24, 7, 6, 12, 9, 11, 35, 14, 10, 15, 3, 3, 21, 5, 19, 14, 12,
+  > 15, 27, 1, 17, 10, 7, 6, 15, 23, 36, 1, 35, 6, 4, 29, 24, 32, 2, 14,
+  > 26, 25, 21, 0, 29, 31, 18, 7, 7, 17 ],
+  > device='cuda:5') 
+- Our batch size is 64, so we have 64 rows in this tensor. Each row is a single integer
+  between 0 and 36, representing our 37 possible pet breeds.
+
+## (37, tensor(1.0000))
+   To transform the activations of our model into predictions like this, we used something called 
+   the softmax activation function.
+
+- Softmax: In our classification model, we use the softmax activation function in the 
+  final layer to ensure that the activations are all between 0 and 1, and that they 
+  sum to 1. Softmax is similar to the sigmoid function,
+
+$$ acts = torch.randn((6,2))*2
+ - Let’s just use some random numbers with a standard deviation of 2 (so we multiply randn by 2) 
+   for this example, assuming we have six images and two possible categories (where the first column
+   represents 3s and the second is 7s)
+     
+- softmax is the multi-category equivalent of sigmoid—we have to use it anytime we
+  have more than two categories and the probabilities of the categories must add to 1,
+
+$$ F.nll_loss(sm_acts, targ, reduction='none')
+   PyTorch provides a function that does exactly the same thing as sm_acts[range(n),targ] 
+   (except it takes the negative, because when applying the log afterward, we will have negative numbers),
+   called nll_loss (NLL stands for negative log likelihood)
+
+$$ plot_function(torch.log, min=0, max=4)
+   We are using probabilities, and probabilities cannot be smaller than 0 or greater than 1. That means
+   our model will not care whether it predicts 0.99 or 0.999. Indeed, those numbers are very close together
+   —but in another sense, 0.999 is 10 times more confident than 0.99. So, we want to transform our numbers 
+   between 0 and 1 to instead be between negative infinity and infinity. There is a mathematical function 
+   that does exactly this: the logarithm (available as torch.log). It is not defined for numbers 
+   less than 0 and looks like this:
+  
+- When we first take the softmax, and then the log likelihood of that, that combination is called 
+  cross-entropy loss, In PyTorch, this is available as nn.CrossEntropyLoss
+
+- When we create a model from a pretrained network, fastai automatically freezes all of
+  the pretrained layers for us. When we call the fine_tune method, fastai does two things:
+• Trains the randomly added layers for one epoch, with all other layers frozen
+• Unfreezes all the layers, and trains them for the number of epochs requested
+
+- learn.fit_one_cycle(3, 3e-3)
+  fit_one_cycle is the suggested way to train models without using fine_tune. in short, what 
+  fit_one_cycle does is to start training at a low learning rate, gradually increase it for the 
+  first section of training, and then gradually decrease it again for the last section of training:
+
+- learn.lr_find()
+  run lr_find again, because having more layers to train, and weights that have already been trained 
+  for three epochs, means our previously found learning rate isn’t appropriate anymore:
+
+- learn.fit_one_cycle(12, lr_max=slice(1e-6,1e-4))
+  fastai lets you pass a Python slice object anywhere that a learning rate is expected. The first value 
+  passed will be the learning rate in the earliest layer of the neural net‐ work, and the second value 
+  will be the learning rate in the final layer. The layers in between will have learning rates that are 
+  multiplicatively equidistant throughout that range. Let’s use this approach to replicate the previous 
+  training, but this time we’ll set only the lowest layer of our net to a learning rate of 1e-6; 
+  the other layers will scale up to 1e-4. 
+
+- learn = cnn_learner(dls, resnet50, metrics=error_rate).to_fp16()
+  NVIDIA GPUs support a special feature called tensor cores that can dramati‐
+  cally speed up neural network training, by 2–3×. They also require a lot less GPU
+  memory. To enable this feature in fastai, just add to_fp16()
+
