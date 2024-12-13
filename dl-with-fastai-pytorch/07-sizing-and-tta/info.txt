@@ -1,0 +1,33 @@
+
+- Normalization
+  When training a model, it helps if your input data is normalized—that is, has a mean of 0 and a standard 
+  deviation of 1. But most images and computer vision libraries use values between 0 and 255 for pixels, or 
+  between 0 and 1; in either case, your data is not going to have a mean of 0 and a standard deviation of 1.
+
+- Test Time Augmentation (TTA)
+  During inference or validation, creating multiple versions of each image using data augmentation, 
+  and then taking the average or maximum of the predictions for each augmented version of the image.
+
+$$ learn.tta()
+  As we can see, using TTA gives us good a boost in performance, with no additional 
+  training required. However, it does make inference slower—if you’re averaging five 
+  images for TTA, inference will be five times slower.
+
+-- Mixup works as follows, for each image:
+    1. Select another image from your dataset at random.
+    2. Pick a weight at random.
+    3. Take a weighted average (using the weight from step 2) of the selected image with
+       your image; this will be your independent variable.
+    4. Take a weighted average (with the same weight) of this image’s labels with your
+       image’s labels; this will be your dependent variable.
+- Mixup requires far more epochs to train to get better accuracy
+
+- Label Smoothing
+  We could replace all our 1s with a number a bit less than 1, and our 0s with a number a bit more 
+  than 0, and then train. This is called label smoothing. By encouraging your model to be less 
+  confident, label smoothing will make your training more robust, even if there is mislabeled data.
+  The result will be a model that generalizes better at inference.
+- In our Imagenette example that has 10 classes, the targets become something like this 
+  [0.01, 0.01, 0.01, 0.91, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+
+
