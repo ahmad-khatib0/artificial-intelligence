@@ -1,0 +1,75 @@
+- collaborative filtering, works like this: look at which products the current user has used or liked, 
+  find other users who have used or liked similar products, and then recommend other products that 
+  those users have used or liked.
+
+- last_skywalker = np.array([0.98,0.9,-0.9])
+  For instance, assuming these factors range between –1 and +1, with positive numbers indicating stronger 
+  matches and negative numbers weaker ones, and the categories are science-fiction, action, and old 
+  movies, then we could represent the movie The Last Skywalker (2019) as follows:
+
+- When we multiply two vectors together and add up the results, this is known as the dot product. 
+  It is used a lot in machine learning and forms the basis of matrix multiplication. 
+
+- Learning the Latent Factors: 
+# Step 1 of this approach is to randomly initialize some parameters. These parameters will be a set of
+  latent factors for each user and movie. We will have to decide how many to use. We will discuss how 
+  to select this shortly, but for illustrative purposes, let’s use 5 for now. Because each user will 
+  have a set of these factors, and each movie will have a set of these factors, we can show these randomly 
+  initialized values right next to the users and movies in our crosstab, and we can then fill in the dot 
+  products for each of these combinations in the middle. For example, Figure 8-2 shows what it looks 
+  like in Microsoft Excel, with the top-left cell formula displayed as an example.
+# Step 2 of this approach is to calculate our predictions. As we’ve discussed, we can do this by simply
+  taking the dot product of each movie with each user. If, for instance, the first latent user factor
+  represents how much the user likes action movies and the first latent movie factor represents whether
+  the movie has a lot of action or not, the product of those will be particularly high if either the 
+  user likes action movies and the movie has a lot of action in it, or the user doesn’t like action
+  movies and the movie doesn’t have any action in it. On the other hand, if we have a mismatch (a user
+  loves action movies but the movie isn’t an action film, or the user doesn’t like action movies
+  and it is one), the product will be very low.
+# Step 3 is to calculate our loss. We can use any loss function that we wish; let’s pick mean squared
+  error for now, since that is one reasonable way to represent the accu‐ racy of a prediction. 
+# That’s all we need. With this in place, we can optimize our parameters (the latent factors) using 
+  stochastic gradient descent, such as to minimize the loss. At each step, the stochastic gradient
+  descent optimizer will calculate the match between each movie and each user using the dot product,
+  and will compare it to the actual rating that each user gave to each movie. It will then calculate
+  the derivative of this value and step the weights by multiplying this by the learning rate. After 
+  doing this lots of times, the loss will get better and better, and the recommendations will also
+  get better and better.
+
+$$ dls = CollabDataLoaders.from_df(ratings, item_name='title', bs=64)
+  We can then build a DataLoaders object from this table. By default, it takes the first column for 
+  the user, the second column for the item (here our movies), and the third column for the ratings.
+  We need to change the value of item_name in our case to use the titles instead of the IDs:
+
+- Multiplying by a one-hot-encoded matrix, using the computational shortcut that it can be implemented
+  by simply indexing directly. This is quite a fancy word for a very simple concept. The thing that
+  you multiply the one-hot-encoded matrix by (or, using the computational shortcut, index into directly)
+  is called the embedding matrix.
+
+- This is what embeddings are. We will attribute to each of our users and each of our movies a random
+  vector of a certain length (here, n_factors=5), and we will make those learnable parameters. That 
+  means that at each step, when we compute the loss by comparing our predictions to our targets, we 
+  will compute the gradients of the loss with respect to those embedding vectors and update them with 
+  the rules of SGD (or another optimizer).
+
+- Weight Decay
+  Weight decay, or L2 regularization, consists of adding to your loss function the sum of
+  all the weights squared. Why do that? Because when we compute the gradients, it will
+  add a contribution to them that will encourage the weights to be as small as possible.
+  
+- Embedding Distance
+  On a two-dimensional map, we can calculate the distance between two coordinates by using the formula
+  of Pythagoras: x2 + y 2 (assuming that x and y are the distances between the coordinates on each axis).
+  For a 50-dimensional embedding, we can do exactly the same thing, except that we add up the squares 
+  of all 50 of the coordinate distances.
+
+- Our dot product model works quite well, and it is the basis of many successful real-world recommendation
+  systems. This approach to collaborative filtering is known as probabilistic matrix factorization (PMF).
+  Another approach, which generally works similarly well given the same data, is deep learning.
+
+$$ embs = get_emb_sz(dls)
+   Since we’ll be concatenating the embedding matrices, rather than taking their dot product, the two
+   embedding matrices can have different sizes (different numbers of latent factors). fastai has a 
+   function get_emb_sz that returns recommended sizes for embedding matrices for your data, based on a
+   heuristic that fast.ai has found tends to work well in practice:
+
