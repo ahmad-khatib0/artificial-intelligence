@@ -1,0 +1,94 @@
+-- First, PyTorch is a tensor library that extends the concept of the array-oriented programming library
+   NumPy with the additional feature that accelerates computation on GPUs, thus providing a seamless 
+   switch between CPUs and GPUs. Second, PyTorch is an automatic differentiation engine, also known as 
+   autograd, that enables the automatic computation of gradients for tensor operations, simplifying 
+   backpropagation and model optimization. Finally, PyTorch is a deep learning library. It offers modular,
+   flexible, and efficient building blocks, including pretrained models, loss functions, and optimizers, 
+   for designing and training a wide range of deep learning models, catering to both researchers and developers.
+
+- There are two versions of PyTorch: a leaner version that only supports CPU
+  computing and a full version that supports both CPU and GPU computing.
+
+- Similar to .reshape and .view, in several cases, PyTorch offers multiple syntax options for executing
+  the same computation. PyTorch initially followed the original Lua Torch syntax convention but then, 
+  by popular request, added syntax to make it similar to NumPy. (The subtle difference between .view() 
+  and .reshape() in PyTorch lies in their handling of memory layout: .view() requires the original data 
+  to be contiguous and will fail if it isn’t, whereas .reshape() will work regardless, copying the 
+  data if necessary to ensure the desired shape.)
+
+- A computational graph is a directed graph that allows us to express and visualize mathematical 
+  expressions. In the context of deep learning, a computation graph lays out the sequence of calculations
+  needed to compute the output of a neural networkwe will need this to compute the required gradients 
+  for backpropagation, the main training algorithm for neural networks.
+
+- PyTorch’s autograd engine constructs a computational graph in the background by tracking every 
+  operation performed on tensors. Then, calling the grad function, we can compute the gradient of 
+  the loss concerning the model parameter w1,
+
+- The forward method describes how the input data passes through the network and comes together as a 
+  computation graph. In contrast, the backward method, which we typically do not need to implement 
+  ourselves, is used during training to compute gradients of the loss function given the model parameters 
+
+- Note that we use the Sequential class when we implement the NeuralNetwork class. Sequential is not
+  required, but it can make our life easier if we have a series of layers we want to execute in a 
+  specific order, as is the case here. This way, after instantiating self.layers = Sequential(...)
+  in the __init__ constructor, we just have to call the self.layers instead of calling each layer 
+  individually in the NeuralNetwork’s forward method.
+
+- Trainable parameters are contained in the torch.nn.Linear layers. A Linear layer 
+  multiplies the inputs with a weight matrix and adds a bias vector. This is sometimes 
+  referred to as a feedforward or fully connected layer.
+
+- The forward pass refers to calculating output tensors from input tensors. This involves 
+  passing the input data through all the neural network layers, starting from the input layer,
+  through hidden layers, and finally to the output layer.
+
+- NOTE PyTorch requires that class labels start with label 0, and the largest class label value should
+  not exceed the number of output nodes minus 1 (since Python index counting starts at zero). So, if we
+  have class labels 0, 1, 2, 3, and 4, the neural network output layer should consist of 5 nodes.
+
+- In PyTorch, the three main components of a custom Dataset class are the __init__ constructor,
+  the __getitem__ method, and the __len__ method 
+
+- Lastly, let’s discuss the setting num_workers=0 in the DataLoader. This parameter in PyTorch’s 
+  DataLoader function is crucial for parallelizing data loading and preprocessing. When num_workers 
+  is set to 0, the data loading will be done in the main pro- cess and not in separate worker processes.
+  This might seem unproblematic, but it can lead to significant slowdowns during model training when we
+  train larger networks on a GPU. Instead of focusing solely on the processing of the deep learning model, 
+  the CPU must also take time to load and preprocess the data. As a result, the GPU can sit idle while 
+  waiting for the CPU to finish these tasks. In contrast, when num_workers is set to a number greater 
+  than 0, multiple worker processes are launched to load data in parallel, freeing the main process to 
+  focus on training your model and better utilizing your system’s resources 
+
+- The learning rate is a hyperparameter, meaning it’s a tunable setting that we must experiment with 
+  based on observing the loss. Ideally, we want to choose a learning rate such that the loss converges
+  after a certain number of epochs—the number of epochs is another hyperparameter to choose.
+
+- In practice, we often use a third dataset, a so-called validation dataset, to find the optimal 
+  hyperparameter settings. A validation dataset is similar to a test set. However, while we only 
+  want to use a test set precisely once to avoid biasing the evaluation, we usually use the 
+  validation set multiple times to tweak the model settings.
+
+- the most basic case of distributed training: PyTorch’s Distributed-DataParallel (DDP) strategy. 
+  DDP enables parallelism by splitting the input data across the available devices and processing 
+  these data subsets simultaneously.
+  
+
+
+
+Summary: 
+  PyTorch is an open source library with three core components: a tensor library,
+   automatic differentiation functions, and deep learning utilities.
+  PyTorch’s tensor library is similar to array libraries like NumPy.
+  In the context of PyTorch, tensors are array-like data structures representing
+   scalars, vectors, matrices, and higher-dimensional arrays.
+  PyTorch tensors can be executed on the CPU, but one major advantage of
+   PyTorch’s tensor format is its GPU support to accelerate computations.
+  The automatic differentiation (autograd) capabilities in PyTorch allow us to conveniently train 
+   neural networks using backpropagation without manually deriving gradients.
+  The deep learning utilities in PyTorch provide building blocks for creating custom deep neural networks.
+  PyTorch includes Dataset and DataLoader classes to set up efficient data-loading pipelines.
+  It’s easiest to train models on a CPU or single GPU.
+  Using DistributedDataParallel is the simplest way in PyTorch to accelerate
+   the training if multiple GPUs are available.
+

@@ -1,0 +1,10 @@
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+ignore = ["F405", "F403"]
+
+[tool.pyright]
+reportUnusedExpression = 'none'
+
