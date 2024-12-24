@@ -1,0 +1,89 @@
+- LLMs utilize an architecture called the transformer, which allows them to pay selective attention to
+  different parts of the input when making predictions, making them especially adept at handling 
+  the nuances and complexities of human language. Since LLMs are capable of generating text, LLMs are 
+  also often referred to as a form of generative artificial intelligence, often abbreviated 
+  as generative AI or GenAI.
+
+- The first step in creating an LLM is to train it on a large corpus of text data, sometimes referred 
+  to as raw text. Here, “raw” refers to the fact that this data is just regular text without any labeling
+  information. (Filtering may be applied, such as removing formatting characters or documents in 
+  unknown languages.)
+
+- The two most popular categories of fine-tuning LLMs are instruction fine-tuning and classification
+  fine-tuning. In instruction fine-tuning, the labeled dataset consists of instruction and answer
+  pairs, such as a query to translate a text accompanied by the correctly translated text. In 
+  classification fine-tuning, the labeled dataset consists of texts and associated class 
+  labels—for example, emails associated with “spam” and “not spam” labels.
+
+- A key component of transformers and LLMs is the self-attention mechanism , which allows the model to
+  weigh the importance of different words or tokens in a sequence relative to each other. This mechanism 
+  enables the model to capture long-range dependencies and contextual relationships within the input data,
+  enhancing its ability to generate coherent and contextually relevant output
+
+- Later variants of the transformer architecture, such as BERT (short for bidirectional encoder 
+  representations from transformers) and the various GPT models (short for generative pretrained 
+  transformers), built on this concept to adapt this architecture for different tasks
+
+- BERT, which is built upon the original transformer’s encoder submodule, differs in its training 
+  approach from GPT. While GPT is designed for generative tasks, BERT and its variants specialize in 
+  masked word prediction, where the model predicts masked or hidden words in a given sentence as shown
+  in figure 1.5. This unique training strategy equips BERT with strengths in text classification tasks, 
+  including sentiment prediction and document categorization. As an application of its capabilities, 
+  as of this writing, X (formerly Twitter) uses BERT to detect toxic content.
+
+- Zero-shot learning refers to the ability to generalize to completely unseen tasks without any prior 
+  specific examples. On the other hand, few-shot learning involves learning from a minimal number of 
+  examples the user provides as input
+
+- Transformers vs. LLMs
+  Today’s LLMs are based on the transformer architecture. Hence, transformers and LLMs are terms that are
+  often used synonymously in the literature. However, note that not all transformers are LLMs since 
+  transformers can also be used for computer vision. Also, not all LLMs are transformers, as there are 
+  LLMs based on recurrent and convolutional architectures. The main motivation behind these alternative
+  approaches is to improve the computational efficiency of LLMs. Whether these alternative LLM architectures
+  can compete with the capabilities of transformer-based LLMs and whether they are going to be adopted in 
+  practice remains to be seen. For simplicity, I use the term “LLM” to refer to transformer-based LLMs similar to GPT.
+
+- GPT was originally introduced in the paper “Improving Language Understanding by Generative Pre-Training”
+  (https://mng.bz/x2qg) by Radford et al. from OpenAI. GPT-3 is a scaled-up version of this model that 
+  has more parameters and was trained on a larger dataset. In addition, the original model offered in 
+  ChatGPT was created by fine-tuning GPT-3 on a large instruction dataset using a method from OpenAI’s
+  InstructGPT paper (https://arxiv.org/abs/2203.02155).
+
+- The general GPT architecture is relatively simple. Essentially, it’s just the decoder part without the
+  encoder (figure 1.8). Since decoder-style models like GPT generate text by predicting text one word at 
+  a time, they are considered a type of autoregressive model. Autoregressive models incorporate their 
+  previous outputs as inputs for future predictions.
+
+- GPT-3 has 96 transformer layers and 175 billion parameters in total.
+
+- The ability to perform tasks that the model wasn’t explicitly trained to perform is called an emergent
+  behavior. This capability isn’t explicitly taught during training but emerges as a natural consequence 
+  of the model’s exposure to vast quantities of multilingual data in diverse contexts
+  
+
+Summary
+  LLMs have transformed the field of natural language processing, which previously mostly relied on 
+   explicit rule-based systems and simpler statistical meth- ods. The advent of LLMs introduced new deep
+   learning-driven approaches that led to advancements in understanding, generating, and translating 
+   human language.
+  Modern LLMs are trained in two main steps: 
+  – First, they are pretrained on a large corpus of unlabeled text by using the prediction of the 
+    next word in a sentence as a label.
+  – Then, they are fine-tuned on a smaller, labeled target dataset to follow
+    instructions or perform classification tasks.
+  LLMs are based on the transformer architecture. The key idea of the transformer architecture is
+   an attention mechanism that gives the LLM selective access to the whole input sequence when 
+   generating the output one word at a time.
+  The original transformer architecture consists of an encoder for 
+   parsing text and a decoder for generating text.
+  LLMs for generating text and following instructions, such as GPT-3 and ChatGPT, only 
+   implement decoder modules, simplifying the architecture.
+  Large datasets consisting of billions of words are essential for pretraining LLMs.
+  While the general pretraining task for GPT-like models is to predict the next word in a sentence, these
+   LLMs exhibit emergent properties, such as capabilities to classify, translate, or summarize texts.
+  Once an LLM is pretrained, the resulting foundation model can be fine-tuned
+   more efficiently for various downstream tasks.
+  LLMs fine-tuned on custom datasets can outperform general LLMs on specific tasks.
+
+
