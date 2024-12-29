@@ -1,0 +1,160 @@
+- Before the advent of transformers, recurrent neural networks (RNNs) were the most popular encoder–decoder
+  architecture for language translation. An RNN is a type of neural network where outputs from previous 
+  steps are fed as inputs to the current step, making them well-suited for sequential data like text.
+
+- The big limitation of encoder–decoder RNNs is that the RNN can’t directly access earlier hidden states
+  from the encoder during the decoding phase. Consequently, it relies solely on the current hidden state,
+  which encapsulates all relevant information. This can lead to a loss of context, especially in complex
+  sentences where dependencies might span long distances.
+
+- Researchers developed the Bahdanau attention mechanism for RNNs in 2014, which modifies the 
+  encoder–decoder RNN such that the decoder can selectively access different parts of the input 
+  sequence at each decoding step as illustrated in figure 3.5.
+
+- Self-attention is a mechanism that allows each position in the input sequence to consider the relevancy
+  of, or “attend to,” all other positions in the same sequence when computing the representation of a 
+  sequence. Self-attention is a key component of contemporary LLMs based on the transformer architecture,
+  such as the GPT series.
+
+- Self-attention serves as the cornerstone of every LLM based on the transformer architecture
+
+- The “self” in self-attention
+  In self-attention, the “self” refers to the mechanism’s ability to compute attention weights by relating
+  different positions within a single input sequence. It assesses and learns the relationships and dependencies
+  between various parts of the input itself, such as words in a sentence or pixels in an image. This is in
+  contrast to traditional attention mechanisms, where the focus is on the relationships between elements
+  of two different sequences, such as in sequence-to-sequence models where the attention might be between
+  an input sequence and an output sequence, such as the example depicted in figure 3.5.
+
+- In self-attention, our goal is to calculate context vectors z^(i) for each element x^(i)
+  in the input sequence. A context vector can be interpreted as an enriched embedding vector.
+  Context vectors play a crucial role in self-attention. Their purpose is to create enriched 
+  representations of each element in an input sequence (like a sentence) by incorporating information
+  from all other elements in the sequence (figure 3.7).
+
+- The first step of implementing self-attention is to compute the intermediate values ω,
+  referred to as attention scores, as illustrated in figure 3.8
+
+- Beyond viewing the dot product operation as a mathematical tool that combines two vectors to yield a
+  scalar value, the dot product is a measure of similarity because it quantifies how closely two vectors
+  are aligned: a higher dot product indicates a greater degree of alignment or similarity between the 
+  vectors. In the context of self-attention mechanisms, the dot product determines the extent to which
+  each element in a sequence focuses on, or “attends to,” any other element: the higher the dot product,
+  the higher the similarity and attention score between two elements.
+
+- The main goal behind the normalization is to obtain attention weights that sum up to 1.
+
+- In practice, it’s more common and advisable to use the softmax function for normalization. This approach
+  is better at managing extreme values and offers more favorable gradient properties during training
+
+- In the context of using PyTorch, the dim parameter in functions like torch.softmax specifies the dimension
+  of the input tensor along which the function will be computed. By setting dim=-1, we are instructing the
+  softmax function to apply the normalization along the last dimension of the attn_scores tensor. If 
+  attn_scores is a two-dimensional tensor (for example, with a shape of [rows, columns]), it will normalize
+  across the columns so that the values in each row (summing over the column dimension) sum up to 1.
+
+- We set requires_grad=False to reduce clutter in the outputs, but if we were to use the weight matrices
+  for model training, we would set requires_grad=True to update these matrices during model training.
+
+- Weight parameters vs. attention weights
+  In the weight matrices W, the term “weight” is short for “weight parameters,” the values of a neural
+  network that are optimized during training. This is not to be confused with the attention weights. 
+  As we already saw, attention weights determine the extent to which a context vector depends on the 
+  different parts of the input (i.e., to what extent the network focuses on different parts of the input).
+  In summary, weight parameters are the fundamental, learned coefficients that define the network’s 
+  connections, while attention weights are dynamic, context-specific values.
+
+- The rationale behind scaled-dot product attention
+  The reason for the normalization by the embedding dimension size is to improve the training performance
+  by avoiding small gradients. For instance, when scaling up the embedding dimension, which is typically
+  greater than 1,000 for GPT-like LLMs, large dot products can result in very small gradients during 
+  backpropagation due to the softmax function applied to them. As dot products increase, the softmax 
+  function behaves more like a step function, resulting in gradients nearing zero. These small gradients 
+  can drastically slow down learning or cause training to stagnate. The scaling by the square root of 
+  the embedding dimension is the reason why this self-attention mechanism is also called scaled-dot 
+  product attention.
+
+- Why query, key, and value?
+  The terms “key,” “query,” and “value” in the context of attention mechanisms are borrowed from the 
+  domain of information retrieval and databases, where similar concepts are used to store, search, and
+  retrieve information. A query is analogous to a search query in a database. It represents the current
+  item (e.g., a word or token in a sentence) the model focuses on or tries to understand. The query is 
+  used to probe the other parts of the input sequence to determine how much attention to pay to them. 
+  The key is like a database key used for indexing and searching. In the attention mechanism, each item
+  in the input sequence (e.g., each word in a sentence) has an associated key. These keys are used to 
+  match the query. The value in this context is similar to the value in a key-value pair in a database. 
+  It represents the actual content or representation of the input items. Once the model determines 
+  which keys (and thus which parts of the input) are most relevant to the query (the current focus item),
+  it retrieves the corresponding values.
+
+- The causal aspect involves modifying the attention mechanism to prevent the model from accessing 
+  future information in the sequence, which is crucial for tasks like language modeling, where each
+  word prediction should only depend on previous words.
+- The multi-head component involves splitting the attention mechanism into multiple “heads.” Each head
+  learns different aspects of the data, allowing the model to simultaneously attend to information from
+  different representation subspaces at different positions. This improves the model’s performance in 
+  complex tasks.
+- Causal attention, also known as masked attention, is a specialized form of self-attention. It restricts
+  a model to only consider previous and current inputs in a sequence when processing any given token 
+  when computing attention scores. This is in contrast to the standard self-attention mechanism, which 
+  allows access to the entire input sequence at once.
+
+- Information leakage
+  When we apply a mask and then renormalize the attention weights, it might initially appear that information
+  from future tokens (which we intend to mask) could still influence the current token because their 
+  values are part of the softmax calculation. However, the key insight is that when we renormalize the 
+  attention weights after masking, what we’re essentially doing is recalculating the softmax over a smaller 
+  subset (since masked positions don’t contribute to the softmax value). The mathematical elegance of
+  softmax is that despite initially including all positions in the denominator, after masking and 
+  renormalizing, the effect of the masked positions is nullified—they don’t contribute to the softmax
+  score in any meaningful way. In simpler terms, after masking and renormalization, the distribution of
+  attention weights is as if it was calculated only among the unmasked positions to begin with. This
+  ensures there’s no information leakage from future (or otherwise masked) tokens as we intended.
+
+- The softmax function converts its inputs into a probability distribution. When negative infinity
+  values (-∞) are present in a row, the softmax function treats them as zero probability. 
+  (Mathematically, this is because e –∞ approaches 0.)
+
+- Dropout in deep learning is a technique where randomly selected hidden layer units are ignored during
+  training, effectively “dropping” them out. This method helps prevent overfitting by ensuring that a 
+  model does not become overly reliant on any specific set of hidden layer units. It’s important to 
+  emphasize that dropout is only used during training and is disabled afterward.
+  
+- In the transformer architecture, including models like GPT, dropout in the attention mechanism is 
+  typically applied at two specific times: after calculating the atten- tion weights or after applying 
+  the attention weights to the value vectors. Here we will apply the dropout mask after computing the 
+  attention weights, as illustrated in figure 3.22, because it’s the more common variant in practice. 
+
+- The use of register_buffer in PyTorch is not strictly necessary for all use cases but offers several
+  advantages here. For instance, when we use the CausalAttention class in our LLM, buffers are automatically
+  moved to the appropriate device (CPU or GPU) along with our model, which will be relevant when training
+  our LLM. This means we don’t need to manually ensure these tensors are on the same device as your model
+  parameters, avoiding device mismatch errors.  
+
+- Even though the MultiHeadAttention class looks more complicated than the MultiHeadAttentionWrapper due to the
+  additional reshaping and transposition of tensors, it is more efficient. The reason is that we only need one 
+  matrix multiplication to compute the keys, for instance, keys = self.W_key(x) (the same is true for the queries
+  and values). In the MultiHeadAttentionWrapper, we needed to repeat this matrix multiplication, which is 
+  computationally one of the most expensive steps, for each attention head.
+
+
+Summary
+
+  Attention mechanisms transform input elements into enhanced context vector representations 
+   that incorporate information about all inputs.
+  A self-attention mechanism computes the context vector representation as a weighted sum over the inputs.
+  In a simplified attention mechanism, the attention weights are computed via dot products.
+  A dot product is a concise way of multiplying two vectors element-wise and then summing the products.
+  Matrix multiplications, while not strictly required, help us implement computations 
+   more efficiently and compactly by replacing nested for loops.
+  In self-attention mechanisms used in LLMs, also called scaled-dot product attention, we include trainable
+   weight matrices to compute intermediate trans formations of the inputs: queries, values, and keys.
+  When working with LLMs that read and generate text from left to right, we add
+   a causal attention mask to prevent the LLM from accessing future tokens.
+  In addition to causal attention masks to zero-out attention weights, we can add
+   a dropout mask to reduce overfitting in LLMs.
+  The attention modules in transformer-based LLMs involve multiple instances of
+   causal attention, which is called multi-head attention.
+  We can create a multi-head attention module by stacking multiple instances of causal attention modules.
+  A more efficient way of creating multi-head attention modules involves batched matrix multiplications.
+
