@@ -1,0 +1,171 @@
+
+- For example, in a neural network layer that is represented by a 2,048 × 2,048–dimensional matrix 
+  (or tensor) of weights, each element of this matrix is a parameter. Since there are 2,048 rows 
+  and 2,048 columns, the total number of parameters in this layer is 2,048 multiplied by 2,048, 
+  which equals 4,194,304 parameters.
+
+- GPT-2 vs. GPT-3
+  Note that we are focusing on GPT-2 because OpenAI has made the weights of the pretrained model publicly
+  available, which we will load into our implementation in chapter 6. GPT-3 is fundamentally the same in
+  terms of model architecture, except that it is scaled up from 1.5 billion parameters in GPT-2 to 175 
+  billion parameters in GPT-3, and it is trained on more data. As of this writing, the weights for GPT-3
+  are not publicly available. GPT-2 is also a better choice for learning how to implement LLMs, as it 
+  can be run on a single laptop computer, whereas GPT-3 requires a GPU cluster for training and inference.
+  According to Lambda Labs (https://lambdalabs.com/), it would take 355 years to train GPT-3 on a single
+  V100 datacenter GPU and 665 years on a consumer RTX 8000 GPU.
+
+- In the GPT_CONFIG_124M dictionary, we use concise variable names for clarity and to prevent long lines of code:
+  vocab_size refers to a vocabulary of 50,257 words, as used by the BPE tokenizer
+  context_length denotes the maximum number of input tokens the model can handle via the positional embeddings.
+  emb_dim represents the embedding size, transforming each token into a 768- dimensional vector.
+  n_heads indicates the count of attention heads in the multi-head attention mechanism.
+  n_layers specifies the number of transformer blocks in the model, which we will cover in the upcoming discussion.
+  drop_rate indicates the intensity of the dropout mechanism (0.1 implies a 10%
+   random drop out of hidden units) to prevent overfitting (see chapter 3).
+  qkv_bias determines whether to include a bias vector in the Linear layers of the multi-head attention for query,
+   key, and value computations. We will initially disable this, following the norms of modern LLMs, but we will 
+   revisit it in chapter 6 when we load pretrained GPT-2 weights from OpenAI into our model (see chapter 6).
+
+
+- The main idea behind layer normalization is to adjust the activations (outputs) of a neural network
+  layer to have a mean of 0 and a variance of 1, also known as unit variance. This adjustment speeds up 
+  the convergence to effective weights and ensures consistent, reliable training. 
+  In GPT-2 and modern transformer architectures, layer normalization is typically applied before and 
+  after the multi-head attention module
+
+- ReLU (short for rectified linear unit), which is a standard activation function in neural 
+  networks. If you are unfamiliar with ReLU, it simply thresholds negative inputs to 0, ensuring 
+  that a layer outputs only positive values, which explains why the resulting layer output does 
+  not contain any negative values.
+
+- Note that the value –5.9605e-08 in the output tensor is the scientific notation for –5.9605 × 10-8,
+  which is –0.000000059605 in decimal form. This value is very close to 0, but it is not exactly 0
+  due to small numerical errors that can accumulate because of the finite precision with which 
+  computers represent numbers.
+
+- variance on the other hand shows us the sensitivity of your model on the training data so it tells
+  us how much the output would have changed if we change the training data even in the same problem
+  when the model is dependent on the subset of the real world that you're training it on what happens
+  is if you change that subset in the real world that you're selecting to train it the outcome is 
+  going to change dramatically a model like this will not be able to perform well in the real world 
+  so what you have at the end is a model that is overfit to the training data
+
+- Bias     = Assumptions    ---> Underfitting  (higher bias means Underfitting)
+  Variance = Sensitivity    ---> Overfitting   (higher variance means Overfitting)
+
+- Biased variance
+  In our variance calculation method, we use an implementation detail by setting unbiased=False. For 
+  those curious about what this means, in the variance calculation, we divide by the number of inputs n
+  in the variance formula. This approach does not apply Bessel’s correction, which typically uses n – 1 
+  instead of n in the denominator to adjust for bias in sample variance estimation. This decision results
+  in a so-called biased estimate of the variance. For LLMs, where the embedding dimension n is 
+  significantly large, the difference between using n and n – 1 is practically negligible. I chose this
+  approach to ensure compatibility with the GPT-2 model’s normalization layers and because it reflects 
+  TensorFlow’s default behavior, which was used to implement the original GPT-2 model. Using a similar 
+  setting ensures our method is compatible with the pretrained weights we will load in chapter 6.
+
+- dim=1 or dim=-1 calculates mean across the column dimension to obtain one mean per row
+- dim=0 calculates mean across the row dimension to obtain one mean per column
+
+- Layer normalization vs. batch normalization
+  If you are familiar with batch normalization, a common and traditional normalization method for neural
+  networks, you may wonder how it compares to layer normalization. Unlike batch normalization, which 
+  normalizes across the batch dimension, layer nor- malization normalizes across the feature dimension.
+  LLMs often require significant computational resources, and the available hardware or the specific use
+  case can dictate the batch size during training or inference. Since layer normalization normalizes 
+  each input independently of the batch size, it offers more flexibility and stability in these scenarios.
+  This is particularly beneficial for distributed training or when deploying models in environments where
+  resources are constrained.
+
+- Historically, the ReLU activation function has been commonly used in deep learning due to its simplicity
+  and effectiveness across various neural network architectures. However, in LLMs, several other 
+  activation functions are employed beyond the traditional ReLU. Two notable examples are GELU 
+  (Gaussian error linear unit) and SwiGLU (Swish-gated linear unit).
+
+- GELU and SwiGLU are more complex and smooth activation functions incorporating Gaussian and 
+  sigmoid-gated linear units, respectively. They offer improved per formance for deep learning models, 
+  unlike the simpler ReLU. The GELU activation function can be implemented in several ways; the exact 
+  version is defined as GELU(x) = x⋅Φ(x), where Φ(x) is the cumulative distribution function of the 
+  standard Gaussian distribution. In practice, however, it’s common to implement a computationally 
+  cheaper approximation (the original GPT-2 model was also trained with this approximation, which 
+  was found via curve fitting)
+
+- The smoothness of GELU can lead to better optimization properties during training, as it allows for 
+  more nuanced adjustments to the model’s parameters. In contrast, ReLU has a sharp corner at zero 
+  (figure 4.18, right), which can sometimes make optimization harder, especially in networks that are
+  very deep or have complex architectures. Moreover, unlike ReLU, which outputs zero for any negative
+  input, GELU allows for a small, non-zero output for negative values. This characteristic means that
+  during the training process, neurons that receive negative input can still contribute to the learning
+  process, albeit to a lesser extent than positive inputs.
+
+- The FeedForward module plays a crucial role in enhancing the model’s ability to learn from and 
+  generalize the data. Although the input and output dimensions of this module are the same, it 
+  internally expands the embedding dimension into a higher-dimensional space through the first 
+  linear layer, as illustrated in figure 4.10. This expansion is followed by a nonlinear GELU 
+  activation and then a contraction back to the original dimension with the second linear 
+  transformation. Such a design allows for the exploration of a richer representation space.
+
+- Adding shortcut connections
+  Let’s discuss the concept behind shortcut connections, also known as skip or residual connections. 
+  Originally, shortcut connections were proposed for deep networks in computer vision (specifically, 
+  in residual networks) to mitigate the challenge of vanishing gradients. The vanishing gradient problem 
+  refers to the issue where gradients (which guide weight updates during training) become progressively
+  smaller as they propagate backward through the layers, making it difficult to effectively train 
+  earlier layers.
+
+- When a transformer block processes an input sequence, each element in the sequence (for example, a
+  word or subword token) is represented by a fixed-size vector (in this case, 768 dimensions). The
+  operations within the transformer block, including multi-head attention and feed forward layers, 
+  are designed to transform these vectors in a way that preserves their dimensionality.
+  The idea is that the self-attention mechanism in the multi-head attention block identifies and analyzes
+  relationships between elements in the input sequence. In contrast, the feed forward network modifies the
+  data individually at each position. This combination not only enables a more nuanced understanding and
+  processing of the input but also enhances the model’s overall capacity for handling complex data patterns.
+
+- The transformer block is repeated many times throughout a GPT model architecture. In the case of the 
+  124-million-parameter GPT-2 model, it’s repeated 12 times, which we specify via the n_layers entry in 
+  the GPT_CONFIG_124M dictionary. This transform block is repeated 48 times in the largest GPT-2 model 
+  with 1,542 million parameters.
+
+- The role of positional encoding is to tell the Transformer mark what is the order that we're giving it 
+
+- Weight tying reduces the overall memory footprint and computational complexity of the model. However, in my 
+  experience, using separate token embedding and output layers results in better training and model performance;
+  hence, we use separate layers in our GPTModel implementation. The same is true for modern LLMs. However, we'll
+  revisit and implement the weight tying concept later in chapter 6 when we load the pretrained weights from OpenAI.
+
+- 621.83 MB
+  In conclusion, by calculating the memory requirements for the 163 million parameters in our GPTModel object
+  and assuming each parameter is a 32-bit float taking up 4 bytes, we find that the total size of the model 
+  amounts to 621.83 MB, illustrating the relatively large storage capacity required to accommodate even relatively
+  small LLMs.
+
+- To code the generate_text_simple function, we use a softmax function to convert the logits into a probability
+  distribution from which we identify the position with the highest value via torch.argmax. The softmax function
+  is monotonic, meaning it preserves the order of its inputs when transformed into outputs. So, in practice, 
+  the softmax step is redundant since the position with the highest score in the softmax output tensor is the
+  same position in the logit tensor. In other words, we could apply the torch.argmax function to the logits 
+  tensor directly and get identical results. However, I provide the code for the conversion to illustrate the 
+  full process of transforming logits to probabilities, which can add additional intuition so that the model 
+  generates the most likely next token, which is known as greedy decoding.
+
+
+Summary
+  Layer normalization stabilizes training by ensuring that each layer’s outputs have a 
+   consistent mean and variance.
+  Shortcut connections are connections that skip one or more layers by feeding the output of one 
+   layer directly to a deeper layer, which helps mitigate the vanishing gradient problem when training
+   deep neural networks, such as LLMs.
+  Transformer blocks are a core structural component of GPT models, combining masked multi-head attention
+   modules with fully connected feed forward networks that use the GELU activation function.
+  GPT models are LLMs with many repeated transformer blocks that have millions to billions of parameters.
+  GPT models come in various sizes, for example, 124, 345, 762, and 1,542 million parameters, 
+   which we can implement with the same GPTModel Python class.
+  The text-generation capability of a GPT-like LLM involves decoding output tensors into human-readable text
+   by sequentially predicting one token at a time based on a given input context. 
+  Without training, a GPT model
+   generates incoherent text, which underscores the importance of model training for coherent text generation.
+
+
+   
+
