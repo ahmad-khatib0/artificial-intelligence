@@ -1,3 +1,7 @@
 .venv
 .ipynb_checkpoints
 __pycache__
+
+build-llm/ch05_pretraining_on_unlabeled_data/gpt2
+model.pth
+model_and_optimizer.pth
