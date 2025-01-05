@@ -1,0 +1,41 @@
+- The most common ways to fine-tune language models are instruction fine-tuning and classification 
+  fine-tuning. Instruction fine-tuning involves training a language model on a set of tasks using specific
+  instructions to improve its ability to understand and exe- cute tasks described in natural language 
+  prompts, as illustrated in figure 6.2.
+  In classification fine-tuning, the model is trained to recognize a specific set of class labels, 
+  such as “spam” and “not spam.” Examples of classification tasks extend beyond LLMs and email filtering:
+  they include identifying different species of plants from images; categorizing news articles into topics
+  like sports, politics, and technology; and distinguishing between benign and malignant tumors in 
+  medical imaging.
+
+-  We are now working with a spam dataset that contains text messages of varying lengths. To batch 
+   these messages as we did with the text chunks, we have two primary options:
+    Truncate all messages to the length of the shortest message in the dataset or batch.
+    Pad all messages to the length of the longest message in the dataset or batch.
+  
+. The first option is computationally cheaper, but it may result in significant information loss if shorter
+  messages are much smaller than the average or longest messages, potentially reducing model performance
+
+
+$ model.out_head = torch.nn.Linear( in_features=BASE_CONFIG["emb_dim"], out_features=num_classes )
+- To keep the code more general, we use BASE_CONFIG["emb_dim"], which is equal to 768 in the 
+  "gpt2-small (124M)" model. Thus, we can also use the same code to work with the larger GPT-2 model 
+  variants. This new model.out_head output layer has its requires_grad attribute set to True by default,
+  which means that it’s the only layer in the model that will be updated during training. Technically, 
+  training the output layer we just added is sufficient. However, as I found in experiments, fine-tuning
+  additional layers can noticeably improve the predictive performance of the model. (For more details, 
+  refer to appendix B.) We also configure the last transformer block and the final LayerNorm module, 
+  which connects this block to the output layer, to be trainable, as depicted in figure 6.10.
+
+- Choosing the number of epochs
+  Earlier, when we initiated the training, we set the number of epochs to five. The number of epochs 
+  depends on the dataset and the task’s difficulty, and there is no universal solution or recommendation,
+  although an epoch number of five is usually a good starting point. If the model overfits after the 
+  first few epochs as a loss plot (see figure 6.16), you may need to reduce the number of epochs. 
+  Conversely, if the trendline suggests that the validation loss could improve with further training, 
+  you should increase the number of epochs. In this concrete case, five epochs is a reasonable
+  number as there are no signs of early overfitting, and the validation loss is close to 0.
+
+
+
+

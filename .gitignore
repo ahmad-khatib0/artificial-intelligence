@@ -2,6 +2,9 @@
 .ipynb_checkpoints
 __pycache__
 
-build-llm/ch05_pretraining_on_unlabeled_data/gpt2
+124M
 model.pth
 model_and_optimizer.pth
+sms_spam_collection
+sms_spam_collection.zip
+review_classifier.pth
