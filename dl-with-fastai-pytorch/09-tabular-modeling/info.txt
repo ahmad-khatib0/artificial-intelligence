@@ -1,0 +1,137 @@
+- Tabular modeling takes data in the form of a table (like a spreadsheet or CSV). 
+  The objective is to predict the value in one column based on the values in the other columns.
+
+- Continuous variables are numerical data, such as “age,” that can be directly fed to the model,
+  since you can add and multiply them directly. Categorical variables contain a number of discrete
+  levels, such as “movie ID,” for which addition and multiplication don’t have meaning 
+  (even if they’re stored as numbers).
+
+- Recent studies have shown that the vast majority of datasets can be best modeled with just two methods:
+  • Ensembles of decision trees (i.e., random forests and gradient boosting machines), mainly for 
+    structured data (such as you might find in a database table at most companies)
+  • Multilayered neural networks learned with SGD (i.e., shallow and/or deep learning), mainly for
+    unstructured data (such as audio, images, and natural language)
+
+- Ensembles of decision trees are our first approach for analyzing a new tabular dataset.
+  The exception to this guideline is when the dataset meets one of these conditions:
+  • There are some high-cardinality categorical variables that are very important (“cardinality” 
+    refers to the number of discrete levels representing categories, so a high-cardinality categorical
+    variable is something like a zip code, which can take on thousands of possible levels).
+  • There are some columns that contain data that would be best understood with a
+    neural network, such as plain text data.
+
+
+$$ df = pd.read_csv(path/'TrainAndValid.csv', low_memory=False)
+   Generally, it’s a good idea to also specify low_memory=False unless Pandas actually runs out of memory
+   and returns an error. The low_memory parameter, which is True by default, tells Pandas to look at only
+   a few rows of data at a time to figure out what type of data is in each column. This means that 
+   Pandas can end up using different data types for different rows, which generally leads to data 
+   processing errors or model training problems later
+
+- A decision tree asks a series of binary (yes or no) questions about the data. After each question,
+  the data at that part of the tree is split between a Yes and a No branch, as shown in Figure 9-6.
+  After one or more questions, either a prediction can be made on the basis of all previous 
+  answers or another question is required.
+
+- The basic steps to train a decision tree can be written down very easily:
+  1. Loop through each column of the dataset in turn.
+  2. For each column, loop through each possible level of that column in turn.
+  3. Try splitting the data into two groups, based on whether they are greater than or less than that
+     value (or if it is a categorical variable, based on whether they are equal to or not equal to 
+     that level of that categorical variable).
+  4. Find the average sale price for each of those two groups, and see how close that is to the actual
+     sale price of each of the items of equipment in that group. Treat this as a very simple “model” 
+     in which our predictions are simply the average sale price of the item’s group.
+  5. After looping through all of the columns and all the possible levels for each, pick
+     the split point that gave the best predictions using that simple model.
+  6. We now have two groups for our data, based on this selected split. Treat each group as 
+     a separate dataset, and find the best split for each by going back to step 1 for each group.
+  7. Continue this process recursively, until you have reached some stopping criterion
+     for each group—for instance, stop splitting a group further when it has only 20 items in it.
+
+- Using TabularPandas and TabularProc
+    A second piece of preparatory processing is to be sure we can handle strings and missing data. 
+    Out of the box, sklearn cannot do either. Instead we will use fastai’s class TabularPandas, 
+    which wraps a Pandas DataFrame and provides a few conveniences. To populate a TabularPandas, 
+    we will use two TabularProcs, Categorify and FillMissing. A TabularProc is like a regular 
+    Transform, except for the following:
+  • It returns the exact same object that’s passed to it, after modifying the object in place.
+  • It runs the transform once, when data is first passed in, rather than lazily as the data is accessed.
+
+$$ procs = [Categorify, FillMissing]
+   Categorify is a TabularProc that replaces a column with a numeric categorical column. FillMissing
+   is a TabularProc that replaces missing values with the median of the column, and creates a new 
+   Boolean column that is set to True for any row where the value was missing. These two transforms 
+   are needed for nearly every tabular dataset you will use, so this is a good starting point for 
+   your data processing:
+
+- A validation set is data we hold back from training in order to ensure that the training process
+  does not overfit on the training data. A test set is data that is held back even more deeply, from 
+  us ourselves, in order to ensure that we don’t overfit on the validation data as we explore 
+  various model architectures and hyperparameters.
+
+$ cond = (df.saleYear<2011) | (df.saleMonth<10)
+  If you look at the date range represented in the test set, you will discover that it covers a 
+  six-month period from May 2012, which is later in time than any date in the training set. This is
+  a good design, because the competition sponsor will want to ensure that a model is able to predict
+  the future. But it means that if we are going to have a useful validation set, we also want the 
+  validation set to be later in time than the training set. The Kaggle training data ends in April 
+  2012, so we will define a narrower training dataset that consists only of the Kaggle training data 
+  from before November 2011, and we’ll define a validation set consisting of data from after November 2011.
+
+$ (path/'to.pkl').save() 
+  Since it takes a minute or so to process the data to get to this point, we should save it —that way,
+  in the future, we can continue our work from here without rerunning the previous steps. fastai 
+  provides a save method that uses Python’s pickle system to save nearly any Python object
+  
+- When your decision tree has more leaves than there are possible objects in your domain, it is 
+  essentially a well-trained guesser. It has learned the sequence of questions needed to identify 
+  a particular data item in the training set, and it is “predicting” only by describing that 
+  item’s value. This is a way of memorizing the training set — i.e., of overfitting.
+
+- Random Forests (Leo Breiman)
+  In 1994, Berkeley professor Leo Breiman, one year after his retirement, published a small 
+  technical report called “Bagging Predictors”, which turned out to be one of the most 
+  influential ideas in modern machine learning.
+  
+- Here is the procedure that Breiman is proposing:
+  1. Randomly choose a subset of the rows of your data (i.e., “bootstrap replicates of your learning set”).
+  2. Train a model using this subset.
+  3. Save that model, and then return to step 1 a few times.
+  4. This will give you multiple trained models. To make a prediction, predict using
+     all of the models, and then take the average of each of those model’s predictions.
+
+- In essence, a random forest is a model that averages the predictions of a large number of decision
+  trees, which are generated by randomly varying various parameters that specify what data is used to
+  train the tree and other tree parameters. Bagging is a particular approach to ensembling, or 
+  combining the results of multiple models together.
+
+- Out-of-Bag Error: 
+  The OOB error is a way of measuring prediction error in the training dataset by including in the 
+  calculation of a row’s error trees only where that row was not included in training. This allows
+  us to see whether the model is overfitting, without needing a separate validation set.
+
+- Model Interpretation
+  For tabular data, model interpretation is particularly important. For a given model, we are most
+  likely to be interested in are the following:
+  • How confident are we in our predictions using a particular row of data?
+  • For predicting with a particular row of data, what were the most important factors, 
+    and how did they influence that prediction?
+  • Which columns are the strongest predictors, which can we ignore?
+  • Which columns are effectively redundant with each other, for purposes of prediction?
+  • How do predictions vary as we vary these columns?
+
+
+- Feature Importance
+  It’s not normally enough to just to know that a model can make accurate predictions 
+  —we also want to know how it’s making predictions. The feature importances give us this insight
+
+- The OOB score is a number returned by sklearn that ranges between 1.0 for a perfect 
+  model and 0.0 for a random model
+
+- Partial dependence plots try to answer the question: if a row varied on nothing other than the 
+  feature in question, how would it impact the dependent variable? For instance, how does 
+  YearMade impact sale price, all other things being equal?
+
+
+  

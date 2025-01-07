@@ -1,0 +1,52 @@
+
+- In addition to masking out padding tokens, it is also common to mask out the target token IDs that 
+  correspond to the instruction, as illustrated in figure 7.13. By masking out the LLM’s target token
+  IDs corresponding to the instruction, the cross entropy loss is only computed for the generated 
+  response target IDs. Thus, the model is trained to focus on generating accurate responses rather 
+  than memorizing instructions, which can help reduce overfitting.
+
+- As of this writing, researchers are divided on whether masking the instructions is universally beneficial
+  during instruction fine-tuning. For instance, the 2024 paper by Shi et al., “Instruction Tuning With Loss 
+  Over Instructions” (https://arxiv.org/abs/2405.14394), demonstrated that not masking the instructions 
+  benefits the LLM performance (see appendix B for more details). Here, we will not apply masking and
+  leave it as an optional exercise for interested readers.
+
+- In practice, instruction-fine-tuned LLMs such as chatbots are evaluated via multiple approaches:
+  Short-answer and multiple-choice benchmarks, such as Measuring Massive Multitask Language Understanding
+   (MMLU; https://arxiv.org/abs/2009.03300), which test the general knowledge of a model.
+  Human preference comparison to other LLMs, such as LMSYS chatbot arena (https://arena.lmsys.org).
+  Automated conversational benchmarks, where another LLM like GPT-4 is used to evaluate the responses,
+   such as AlpacaEval (https://tatsu-lab.github.io/alpaca_eval/).
+
+- Automated conversational benchmarks, involves evaluating the responses automatically using another 
+  LLM. This method will allow us to efficiently assess the quality of the generated responses without 
+  the need for extensive human involvement, thereby saving time and resources while still obtaining 
+  meaningful performance indicators.
+
+- To further improve our model’s performance, we can explore various strategies, such as: 
+  Adjusting the hyperparameters during fine-tuning, such as the learning rate, batch size, 
+   or number of epochs
+  Increasing the size of the training dataset or diversifying the examples to cover
+   a broader range of topics and styles
+  Experimenting with different prompts or instruction formats to guide the model’s responses more effectively
+  Using a larger pretrained model, which may have greater capacity to capture complex patterns 
+   and generate more accurate responses
+
+
+Summary
+  The instruction-fine-tuning process adapts a pretrained LLM to follow human 
+   instructions and generate desired responses.
+  Preparing the dataset involves downloading an instruction-response dataset, formatting the 
+   entries, and splitting it into train, validation, and test sets.
+  Training batches are constructed using a custom collate function that pads sequences, 
+   creates target token IDs, and masks padding tokens.
+  We load a pretrained GPT-2 medium model with 355 million parameters to serve as the starting
+   point for instruction fine-tuning.
+  The pretrained model is fine-tuned on the instruction dataset using a 
+   training loop similar to pretraining.
+  Evaluation involves extracting model responses on a test set and scoring them
+   (for example, using another LLM).
+  The Ollama application with an 8-billion-parameter Llama model can be used to automatically score
+   the fine-tuned model’s responses on the test set, provid- ing an average score to quantify performance.
+
+
